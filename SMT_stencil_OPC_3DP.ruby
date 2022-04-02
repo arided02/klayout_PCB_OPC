@@ -1,10 +1,11 @@
 
+
 # This macro is wrote for PCB SMT Stencil OPC manufacturing on 3DP FDM process
 # Use a tile size of 1mm
 #tiles(1.5)
 
 # Use 2 CPU cores
-threads(2)
+threads(3)
 mycv = RBA::CellView::active
 
 # This is a sample:
@@ -44,7 +45,7 @@ boardlinet3=boardlinet2.sized(0,-0.07).sized(0,0.14).sized(0,-0.07) #.output("te
 boardlinet4=boardLine.interacting(boardlinet3)
 #boardlinet4.output("temp4 (1003/0)")
 #boardlinet4=input("temp4")
-hulls(boardlinet4).size(0.001).size(-0.001).output("boardSq (1006/0)")
+hulls(boardlinet4).size(0.061).size(-0.071).output("boardSq (1006/0)")
 
 
 ## Paste global size up for 3DP
@@ -135,7 +136,7 @@ def myPasteOPC1 (nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSize
     topPasteW1M2t3=topPasteW1M2.interacting(topPasteW1M2t2) #.output("tp2s_t4") ## y shorter than x axis
     topPasteW1M2t4=topPasteW1M2.not_interacting(topPasteW1M2t2) #.output("tp2s_t5") ## x shorter than y axis
     topPasteW1M2_out=(topPasteW1M2t3.sized(0,-nozzleSpaceFix/2)).or (topPasteW1M2t4.sized(-nozzleSpaceFix/2,0))
-    topPasteW1_opc= (topPasteW1M2_out.or(topPasteW1_opc.not_interacting(topPasteW1M2_out))) #.output("tp2_final")
+    topPasteW1_opc= ((topPasteW1M2_out.or(topPasteW1_opc.not_interacting(topPasteW1M2_out)))).sized(0.05).sized(-0.1).sized(0.05) #.output("tp2_final")
     #sum all of tpX
     #topPasteW1_opc=input("tp2_final")
     #topPasteW2=input("tp3")
@@ -143,11 +144,56 @@ def myPasteOPC1 (nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSize
     myLayerOPC=""""+ myLayer+"OPC (#{ outPutGDS }/0)"""
     puts myLayerOPC
     topPasteSum=(topPasteW1_opc+topPasteW2+topPasteW3).output(myLayerOPC)
-
+    puts "output done"
    
     
 end
 
+def myChipHolder(nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSizeWidthx2,pasteLayer,silkLayer,assemblyLayer,courtyard,boardLayer, outputGDS)
+   padPaste=input(pasteLayer)
+   silk=input(silkLayer)
+   assembly=input(assemblyLayer)
+   court=input(courtyard)
+   puresilk=silk.not_interacting(assembly)
+   board=input(boardLayer)
+   padPasteS1=((padPaste.sized(0.2).sized(-0.4).sized(0.2)).or(puresilk.sized(0.2).sized(-0.4).sized(0.2))).sized(nozzleWidth).sized(-nozzleWidth*2).sized(1.5*nozzleWidth)
+   #padPasteS1.output("h1")
+   ##hull the silk
+   padPasteT1=((((hulls(puresilk).sized(nozzleWidth*1.5)).and(board)).interacting(padPasteS1)).or(padPaste)).sized(+nozzleWidth*0.25)
+   #padPasteT1.output("h2")
+   padPasteT2=hulls(padPasteT1)
+   padCourt=hulls(court).and(board)
+   padPasteT3=(padPasteT2.and(padCourt)).or(padPasteT2.not_interacting(padCourt)).or((padPasteT2.not(padCourt)).interacting(silk))
+   padHolderT1=(padPasteS1.or(padPasteT3.or(padCourt))).sized(0.15).sized(-0.3).sized(0.15)
+   ##check OPC
+   #padHolderT2=padHolderT1.space(nozzleWidth).output("h2_narrow")
+   #padHolderT2=input("h2_narrow")
+   #padHolderT3=padHolderT2.sized(nozzleLengthFix/2).sized(-nozzleLengthFix/2).sized(0.1).sized(-0.1)
+   padHolder=padHolderT1   #(+padHolderT3).sized(0.01).sized(-0.02).sized(0.01)
+   silkLayerOPC=""""+ silkLayer+"OPC (#{ outputGDS }/0)"""
+   puts silkLayerOPC
+   padHolder.output(silkLayerOPC)
+end
+
+def pcbHole(nozzleWidth,minSizeWidth,drillLayer, outputGDS)
+   drill=input(drillLayer)
+   drillT1=drill.sized(-minSizeWidth*1.5).sized(2*minSizeWidth*1.5).sized(-minSizeWidth*1.5-nozzleWidth/2)
+   drillLayerOut=""""+ drillLayer+"Mnt(#{ outputGDS }/0)"""
+   puts drillLayerOut
+   drillT1.output(drillLayerOut)
+
+end
+
+## draw the toppaste and bottompaste OPC
+#topPasteOPC
 myPasteOPC1(nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSizeWidthx2,"Top_Paste", 1007)
 #bottomPasteOPC
 myPasteOPC1(nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSizeWidthx2,"Bottom_Paste", 1008)
+
+## draw add the IC/R/C SMT holder
+myChipHolder(nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSizeWidthx2, "Top_Paste", "Top_Silk","Top_Assembly","Top_Courtyard","boardSq", 1010)
+## bottom holder
+myChipHolder(nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSizeWidthx2, "Bottom_Paste", "Bottom_Silk","Bottom_Assembly","Nottom_Courtyard","boardSq", 1011)
+
+##draw the PCB Holder via large mount drill holes.
+pcbHole(nozzleWidth,minSizeWidth,"Drill_Top", 1009)

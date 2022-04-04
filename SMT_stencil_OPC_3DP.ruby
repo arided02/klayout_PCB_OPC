@@ -165,11 +165,11 @@ def myChipHolder(nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSize
    padCourt=hulls(court).and(board)
    padPasteT3=(padPasteT2.and(padCourt)).or(padPasteT2.not_interacting(padCourt)).or((padPasteT2.not(padCourt)).interacting(silk))
    padHolderT1=(padPasteS1.or(padPasteT3.or(padCourt))).sized(0.15).sized(-0.3).sized(0.15)
-   ##check OPC
-   #padHolderT2=padHolderT1.space(nozzleWidth).output("h2_narrow")
-   #padHolderT2=input("h2_narrow")
-   #padHolderT3=padHolderT2.sized(nozzleLengthFix/2).sized(-nozzleLengthFix/2).sized(0.1).sized(-0.1)
-   padHolder=padHolderT1   #(+padHolderT3).sized(0.01).sized(-0.02).sized(0.01)
+   ## check to silk <0.085 to enlarge to 0.2
+   padSilkT1=padHolderT1.enclosing(silk,0.2).output("holderSilkp2")
+   padSilkT1=input("holderSilkp2")
+   padSilk=padSilkT1.size(0.12)
+   padHolder=(padHolderT1.or(padSilk)).sized(0.15).sized(-0.3).sized(0.15)   
    silkLayerOPC=""""+ silkLayer+"OPC (#{ outputGDS }/0)"""
    puts silkLayerOPC
    padHolder.output(silkLayerOPC)

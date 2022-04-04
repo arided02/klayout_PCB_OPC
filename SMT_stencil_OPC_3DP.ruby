@@ -135,7 +135,7 @@ def myPasteOPC1 (nozzleWidth,nozzleSpaceFix,nozzleLengthFix,minSizeWidth,minSize
     #topPasteW1M2t2=input("tp2s_t3")
     topPasteW1M2t3=topPasteW1M2.interacting(topPasteW1M2t2) #.output("tp2s_t4") ## y shorter than x axis
     topPasteW1M2t4=topPasteW1M2.not_interacting(topPasteW1M2t2) #.output("tp2s_t5") ## x shorter than y axis
-    topPasteW1M2_out=(topPasteW1M2t3.sized(0,-nozzleSpaceFix/2)).or (topPasteW1M2t4.sized(-nozzleSpaceFix/2,0))
+    topPasteW1M2_out=(topPasteW1M2t3.sized(0,-nozzleSpaceFix*1.5)).or (topPasteW1M2t4.sized(-nozzleSpaceFix*1.5,0))  ##enlarge the disclosre region of merged pads.
     topPasteW1_opc= ((topPasteW1M2_out.or(topPasteW1_opc.not_interacting(topPasteW1M2_out)))).sized(0.05).sized(-0.1).sized(0.05) #.output("tp2_final")
     #sum all of tpX
     #topPasteW1_opc=input("tp2_final")
